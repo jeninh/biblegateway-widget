@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOTD Widget</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      padding: 0;
+    }
+
+    .widget-container {
+      width: 100vw;
+      height: 100vh;
+      background-size: cover;
+      background-position: center;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 2rem;
+      backdrop-filter: brightness(0.7);
+    }
+
+    .verse {
+      font-size: 1.8rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    }
+
+    .ref {
+      font-size: 1.2rem;
+      text-align: right;
+      opacity: 0.9;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+    }
+
+    .credits {
+      font-size: 0.9rem;
+      text-align: center;
+      opacity: 0.7;
+      text-shadow: 0 0 4px rgba(0, 0, 0, 0.7);
+    }
+
+    a {
+      color: #aaccff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .verse { font-size: 1.2rem; }
+      .ref { font-size: 1rem; }
+      .credits { font-size: 0.8rem; }
+      .widget-container { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div id="widget" class="widget-container">
+    <div id="verse" class="verse">Loading verse...</div>
+    <div id="reference" class="ref"></div>
+    <div id="credits" class="credits"></div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const bg = params.get('bg');
+    const widget = document.getElementById('widget');
+    if (bg) {
+      widget.style.backgroundImage = `url('${bg}')`;
+    }
+
+    const rss2jsonApiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.biblegateway.com/usage/votd/rss/votd.rdf';
+    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rss2jsonApiUrl);
+
+    fetch(proxyUrl)
+      .then(res => {
+        if (!res.ok) throw new Error('Network response not ok');
+        return res.json();
+      })
+      .then(data => {
+        const json = JSON.parse(data.contents);
+        if (!json.items || json.items.length === 0) throw new Error('No items found');
+        const item = json.items[0];
+        const reference = item.title || '';
+        const htmlContent = item.content || '';
+        const parts = htmlContent.split('<br><br>');
+        const verseTextRaw = parts[0] || '';
+        const creditsRaw = parts[1] || '';
+        const verseText = verseTextRaw
+          .replace(/<[^>]*>/g, '')
+          .replace(/&quot;/g, '"')
+          .replace(/&#8217;/g, "'")
+          .replace(/&amp;/g, '&')
+          .trim();
+        const credits = creditsRaw.trim();
+        document.getElementById('verse').innerText = verseText;
+        document.getElementById('reference').innerText = reference;
+        document.getElementById('credits').innerHTML = credits;
+      })
+      .catch(e => {
+        document.getElementById('verse').innerText = 'Failed to load verse.';
+        console.error(e);
+      });
+  </script>
+</body>
+</html>
