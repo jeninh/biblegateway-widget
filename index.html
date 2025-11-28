@@ -90,7 +90,7 @@
       widget.style.backgroundImage = `url('${bg}')`;
     }
 
-    const rss2jsonApiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://www.biblegateway.com/usage/votd/rss/votd.rdf';
+    const rss2jsonApiUrl = 'https://www.toptal.com/developers/feed2json/convert?url=https%3A%2F%2Fwww.biblegateway.com%2Fusage%2Fvotd%2Frss%2Fvotd.rdf';
     const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rss2jsonApiUrl);
 
     fetch(proxyUrl)
