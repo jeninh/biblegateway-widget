@@ -90,8 +90,8 @@
       widget.style.backgroundImage = `url('${bg}')`;
     }
 
-    const rss2jsonApiUrl = 'https://www.toptal.com/developers/feed2json/convert?url=https%3A%2F%2Fwww.biblegateway.com%2Fusage%2Fvotd%2Frss%2Fvotd.rdf';
-    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rss2jsonApiUrl);
+    const feedUrl = 'https://www.biblegateway.com/usage/votd/rss/votd.rdf';
+    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(feedUrl);
 
     fetch(proxyUrl)
       .then(res => {
@@ -103,20 +103,21 @@
         if (!json.items || json.items.length === 0) throw new Error('No items found');
         const item = json.items[0];
         const reference = item.title || '';
-        const htmlContent = item.content || '';
-        const parts = htmlContent.split('<br><br>');
+        const htmlContent = item.content_html || '';
+        const parts = htmlContent.split('<br/><br/>');
         const verseTextRaw = parts[0] || '';
-        const creditsRaw = parts[1] || '';
         const verseText = verseTextRaw
           .replace(/<[^>]*>/g, '')
+          .replace(/&ldquo;/g, '"')
+          .replace(/&rdquo;/g, '"')
           .replace(/&quot;/g, '"')
           .replace(/&#8217;/g, "'")
           .replace(/&amp;/g, '&')
           .trim();
-        const credits = creditsRaw.trim();
         document.getElementById('verse').innerText = verseText;
         document.getElementById('reference').innerText = reference;
-        document.getElementById('credits').innerHTML = credits;
+        const creditsRaw = parts[1] || '';
+        document.getElementById('credits').innerHTML = creditsRaw.trim();
       })
       .catch(e => {
         document.getElementById('verse').innerText = 'Failed to load verse.';
