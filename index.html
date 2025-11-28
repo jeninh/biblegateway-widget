@@ -99,12 +99,21 @@
         return res.json();
       })
       .then(data => {
-        const json = JSON.parse(data.contents);
-        if (!json.items || json.items.length === 0) throw new Error('No items found');
-        const item = json.items[0];
-        const reference = item.title || '';
-        const htmlContent = item.content_html || '';
-        const parts = htmlContent.split('<br/><br/>');
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(data.contents, 'application/xml');
+        
+        if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
+          throw new Error('XML parsing error');
+        }
+        
+        const items = xmlDoc.getElementsByTagName('item');
+        if (items.length === 0) throw new Error('No items found');
+        
+        const item = items[0];
+        const reference = item.getElementsByTagName('title')[0]?.textContent || '';
+        const contentEncoded = item.getElementsByTagName('content:encoded')[0]?.textContent || '';
+        
+        const parts = contentEncoded.split('<br/>');
         const verseTextRaw = parts[0] || '';
         const verseText = verseTextRaw
           .replace(/<[^>]*>/g, '')
@@ -114,10 +123,12 @@
           .replace(/&#8217;/g, "'")
           .replace(/&amp;/g, '&')
           .trim();
+        
         document.getElementById('verse').innerText = verseText;
         document.getElementById('reference').innerText = reference;
-        const creditsRaw = parts[1] || '';
-        document.getElementById('credits').innerHTML = creditsRaw.trim();
+        
+        const creditsLink = item.getElementsByTagName('dc:rights')[0]?.textContent || '';
+        document.getElementById('credits').innerHTML = creditsLink;
       })
       .catch(e => {
         document.getElementById('verse').innerText = 'Failed to load verse.';
